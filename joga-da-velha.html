@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Velha</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: #fff;
+            background: #4a90e2;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .cell:hover {
+            background: #357ABD;
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            background: #ff7f50;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #ff5733;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Jogo da Velha</h1>
+        <div>
+            <button onclick="setGameMode('player')">2 Jogadores</button>
+            <button onclick="setGameMode('ai')">Contra a Máquina</button>
+        </div>
+        <div class="board" id="board"></div>
+        <div class="status" id="status">Escolha um modo de jogo</div>
+        <button onclick="resetGame()">Reiniciar</button>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const status = document.getElementById('status');
+        let currentPlayer = 'X';
+        let cells = ['', '', '', '', '', '', '', '', ''];
+        let gameMode = '';
+
+        function setGameMode(mode) {
+            gameMode = mode;
+            status.textContent = `Modo selecionado: ${mode === 'player' ? '2 Jogadores' : 'Contra a Máquina'}`;
+            resetGame();
+        }
+
+        function createBoard() {
+            board.innerHTML = '';
+            cells.forEach((_, index) => {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.setAttribute('data-index', index);
+                cell.addEventListener('click', handleCellClick);
+                board.appendChild(cell);
+            });
+        }
+
+        function handleCellClick(event) {
+            const index = event.target.getAttribute('data-index');
+            if (cells[index] === '' && gameMode) {
+                cells[index] = currentPlayer;
+                event.target.textContent = currentPlayer;
+                if (checkWinner()) {
+                    status.textContent = `Jogador ${currentPlayer} venceu!`;
+                    disableBoard();
+                    return;
+                } else if (cells.every(cell => cell !== '')) {
+                    status.textContent = 'Empate!';
+                    return;
+                }
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                status.textContent = `Vez do jogador ${currentPlayer}`;
+                if (gameMode === 'ai' && currentPlayer === 'O') {
+                    aiMove();
+                }
+            }
+        }
+
+        function aiMove() {
+            let emptyCells = cells.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+            const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            cells[randomIndex] = 'O';
+            document.querySelector(`[data-index='${randomIndex}']`).textContent = 'O';
+            if (checkWinner()) {
+                status.textContent = `Jogador O venceu!`;
+                disableBoard();
+            } else {
+                currentPlayer = 'X';
+                status.textContent = 'Vez do jogador X';
+            }
+        }
+
+        function checkWinner() {
+            const winningCombinations = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            return winningCombinations.some(combination => {
+                const [a, b, c] = combination;
+                return cells[a] && cells[a] === cells[b] && cells[a] === cells[c];
+            });
+        }
+
+        function disableBoard() {
+            board.querySelectorAll('.cell').forEach(cell => cell.removeEventListener('click', handleCellClick));
+        }
+
+        function resetGame() {
+            cells = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            status.textContent = 'Vez do jogador X';
+            createBoard();
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
